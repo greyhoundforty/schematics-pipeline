@@ -61,6 +61,7 @@ spec:
           for KEY in $(cat temp.json | jq ".template_data[0].values_metadata[].name" -r); do
               
               # if the value exists as an env var, update the workspace
+              # where is it workspace written back to temp.json
               if [ -n "${!KEY}" ]; then
                   echo "$KEY found with value '${!KEY}'"; 
                   SEARCH=$(cat temp.json | jq ".template_data[0].variablestore[]?.name")
@@ -80,6 +81,12 @@ spec:
                   fi
               fi
           done
+
+
+          WORKSPACE=$(echo $WORKSPACE | jq -r '.template_repo.url = .template_repo.full_url')
+          WORKSPACE=$(echo $WORKSPACE | jq -r 'del(.template_data[0].env_values, .template_data[0].values_metadata, .runtime_data, .template_data[0].has_githubtoken, .template_repo.full_url, .template_repo.has_uploadedgitrepotar, .template_repo.commit_id, .applied_shareddata_ids, .last_action_name, .last_activity_id, .last_health_check_at, .updated_at, .created_at, .created_by, .status, .failure_reason, .workspace_status_msg, .workspace_status, .cart_id)')
+
+          echo "$WORKSPACE" > "temp.json"
 
           cp temp.json workspace.json
           ibmcloud terraform workspace update --id $WORKSPACE_ID --file workspace.json
